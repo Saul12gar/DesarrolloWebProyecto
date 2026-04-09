@@ -1,0 +1,26 @@
+# Manual de Usuario
+
+## Introducción
+Esta aplicación permite gestionar datos dinámicamente con funcionalidades como crear, editar, eliminar, buscar, filtrar y ordenar registros. Los datos se almacenan en LocalStorage para persistencia.
+
+## Funcionalidades
+1. **Crear Registros**: Complete el formulario y haga clic en "Agregar".
+2. **Editar Registros**: Use el botón "Editar" en la tabla para cargar los datos en el formulario.
+3. **Eliminar Registros**: Use el botón "Eliminar" y confirme la acción.
+4. **Buscar y Filtrar**: Utilice los campos de búsqueda y filtros disponibles.
+5. **Ordenar Registros**: Los registros se pueden ordenar dinámicamente.
+
+## Requerimientos Técnicos
+- Navegador moderno compatible con JavaScript.
+- Acceso a LocalStorage habilitado.
+
+## Uso de la Interfaz
+- **Formulario**: Ingrese los datos y valide los campos obligatorios.
+- **Tabla Dinámica**: Visualice y gestione los registros.
+- **Mensajes Dinámicos**: Reciba alertas y confirmaciones en tiempo real.
+
+## Persistencia
+Los datos se guardan automáticamente en LocalStorage y se recuperan al recargar la página.
+
+## Contacto
+Para soporte, contacte al desarrollador en soporte@ejemplo.com.

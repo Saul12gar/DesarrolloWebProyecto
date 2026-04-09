@@ -1,0 +1,51 @@
+/* Estilos para el Panel de Administración */
+
+.admin-panel {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.admin-panel h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.admin-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-panel th,
+.admin-panel td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.admin-panel th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.admin-panel tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.admin-panel tr:hover {
+  background-color: #f1f1f1;
+}
+
+.admin-panel button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.admin-panel button:hover {
+  background-color: #45a049;
+}

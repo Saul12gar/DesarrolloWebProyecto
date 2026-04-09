@@ -1,0 +1,44 @@
+/* Tema oscuro */
+.dark-mode {
+  #carouselExampleIndicators {
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .carousel-indicators button {
+      background-color: #6b7280;
+
+      &.active {
+        background-color: #f1f5f9;
+      }
+    }
+  }
+}
+
+#carouselExampleIndicators {
+  margin: 2rem 0;
+
+  .carousel-inner {
+    .carousel-item {
+      img {
+        height: 400px;
+        object-fit: cover;
+      }
+    }
+  }
+
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+  }
+
+  .carousel-indicators button {
+    background-color: #6c757d;
+
+    &.active {
+      background-color: #0d6efd;
+    }
+  }
+}

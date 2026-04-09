@@ -1,0 +1,145 @@
+// Variables
+$hero-height: 70vh; // Ocupará el 70% del alto de la pantalla
+$hero-min-height: 400px;
+$primary-color: #0d6efd;
+$primary-color-dark: #1e40af;
+
+// Tema oscuro
+.dark-mode {
+  $primary-color: #1e40af;
+  $hero-bg-overlay: rgba(0, 0, 0, 0.8);
+  $hero-text-color: #f1f5f9;
+  $hero-shadow: rgba(0, 0, 0, 0.7);
+}
+
+.hero-image {
+  position: relative;
+  height: $hero-height;
+  min-height: $hero-min-height;
+
+  // IMPORTANTE: Reemplaza esta URL con la ruta real de tu imagen de figuras
+  background-image: url('../assets/tu-imagen-de-fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  // Usamos Flexbox para centrar el contenido fácilmente
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Capa oscura superpuesta para que el texto resalte (Overlay)
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6); // Negro al 60% de opacidad
+    z-index: 1;
+  }
+
+  // Tema oscuro
+  .dark-mode &::before {
+    background: rgba(0, 0, 0, 0.8); // Más oscuro en modo oscuro
+  }
+
+  .hero-text {
+    position: relative;
+    z-index: 2; // Coloca el texto por encima de la capa oscura
+    text-align: center;
+    color: #ffffff;
+    padding: 0 20px;
+    max-width: 800px; // Evita que el texto sea demasiado ancho en pantallas grandes
+
+    p {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5); // Sombra extra para legibilidad
+      line-height: 1.2;
+
+      // Diseño responsivo: texto más pequeño en celulares
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+    }
+
+    .btn-primary {
+      font-size: 1.25rem;
+      padding: 0.8rem 2.5rem;
+      border-radius: 50px; // Botón estilo píldora
+      text-transform: uppercase;
+      font-weight: bold;
+      letter-spacing: 1px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-color: $primary-color;
+      border: none;
+      color: white;
+
+      // Tema oscuro
+      .dark-mode & {
+        background-color: $primary-color-dark;
+        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+      }
+
+      // Solo en caso de que mantengas la etiqueta <a> por dentro (no recomendado)
+      a {
+        color: white;
+        text-decoration: none;
+      }
+
+      // Animación al pasar el mouse
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba($primary-color, 0.4);
+
+        .dark-mode & {
+          box-shadow: 0 6px 20px rgba(30, 64, 175, 0.5);
+        }
+      }
+
+      // Efecto al hacer clic
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+  }
+}
+        font-size: 2rem;
+      }
+    }
+
+    .btn-primary {
+      font-size: 1.25rem;
+      padding: 0.8rem 2.5rem;
+      border-radius: 50px; // Botón estilo píldora
+      text-transform: uppercase;
+      font-weight: bold;
+      letter-spacing: 1px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      
+      // Solo en caso de que mantengas la etiqueta <a> por dentro (no recomendado)
+      a {
+        color: white;
+        text-decoration: none;
+      }
+
+      // Animación al pasar el mouse
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba($primary-color, 0.4);
+
+        .dark-mode & {
+          box-shadow: 0 6px 20px rgba(30, 64, 175, 0.5);
+        }
+      }
+
+      // Efecto al hacer clic
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+  }
+}

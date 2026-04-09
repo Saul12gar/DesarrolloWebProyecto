@@ -1,0 +1,50 @@
+/* Tema oscuro */
+.dark-mode {
+  .bar {
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+  }
+
+  .navbar-brand {
+    color: #f1f5f9 !important;
+  }
+
+  .navbar-nav .nav-link {
+    color: #d1d5db !important;
+
+    &:hover {
+      color: #f1f5f9 !important;
+    }
+
+    &.active {
+      color: #60a5fa !important;
+    }
+  }
+
+  .dropdown-menu {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+
+    .dropdown-item {
+      color: #d1d5db;
+
+      &:hover {
+        background-color: #4b5563;
+        color: #f1f5f9;
+      }
+    }
+  }
+
+  .navbar-toggler {
+    border-color: #6b7280;
+
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28229, 231, 235, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+  }
+}
+
+.bar{
+    background-color: lightgray;
+    height: 80px;
+}
