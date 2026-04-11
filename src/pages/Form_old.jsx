@@ -48,56 +48,47 @@ function Form() {
     // Previene el comportamiento por defecto del formulario
     e.preventDefault();
 
-    // Validación: requiere que se seleccione una imagen antes de enviar
-    if (!imagenes) {
-      alert("Por favor selecciona una imagen antes de enviar.");
+    // Validación básica
+    if (!nombre || !descripcion || !precio) {
+      alert("Por favor completa todos los campos obligatorios.");
       return;
     }
 
-    // Crea un objeto FormData para incluir archivos en la solicitud
-    const formData = new FormData();
-    // Genera un ID automático si el usuario no lo proporciona
-    const sentId = id === "" ? `prod_${Date.now()}` : id;
-    formData.append("id", sentId);
-    formData.append("nombre", nombre);
-    formData.append("descripcion", descripcion);
-    // Convierte el precio a número o envía string vacío si no está definido
-    formData.append("precio", precio === "" ? "" : Number(precio));
-    if (imagenes) {
-      // Agrega la imagen al FormData
-      formData.append("imagen", imagenes);
-    }
-
     try {
-      // Log para debugging - muestra qué datos se envían
-      for (const pair of formData.entries()) {
-        const key = pair[0];
-        const val = pair[1];
-        if (val instanceof File) {
-          console.log(key, { name: val.name, type: val.type, size: val.size });
-        } else {
-          console.log(key, val);
-        }
-      }
-      // Envía los datos al servidor via POST
-      const response = await fetch("http://localhost/api/subir.php", {
+      const productData = {
+        nombre,
+        categoria: "General", // Por defecto, se puede agregar un campo para categoría
+        precio: Number(precio),
+        descripcion,
+        imagenes: imagenes ? imagenes.name : '', // Solo el nombre del archivo por ahora
+        status: 'available'
+      };
+
+      const response = await fetch("http://localhost:3001/api/products", {
         method: "POST",
-        body: formData,
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData),
       });
 
-      // Obtiene la respuesta del servidor
-      const text = await response.text();
-      if (!response.ok) {
-        // Lanza error con el código HTTP y mensaje del servidor
-        throw new Error(`HTTP ${response.status} - ${text}`);
-      }
+      const data = await response.json();
 
-      // Log de la respuesta del servidor para debugging
-      console.log("Server response:", text);
-      alert("Producto agregado");
+      if (response.ok) {
+        alert("Producto agregado exitosamente");
+        // Limpiar formulario
+        setNombre("");
+        setId("");
+        setDescripcion("");
+        setPrecio("");
+        setImagenes(null);
+      } else {
+        alert(data.message || "Error al agregar el producto");
+      }
     } catch (error) {
-      // Manejo de errores con logs y alertas al usuario
       console.error("Error al agregar el producto:", error);
+      alert("Error de conexión con el servidor");
+    }
+  };
       alert(`No se pudo agregar el producto: ${error.message}`);
     }
   };

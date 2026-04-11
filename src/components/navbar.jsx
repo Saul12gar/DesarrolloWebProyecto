@@ -1,54 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
-  const [user, setUser] = useState(null);
+  const { user, logout, hasRole, hasPermission, hasAnyRole } = useAuth();
   const location = useLocation(); // Hook para obtener la ruta actual
 
   // Determinar si estamos en una página de autenticación
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
   const isAdminPage = location.pathname === "/admin";
   const isProfilePage = location.pathname === "/perfil";
 
-  // Al cargar la navbar, preguntamos al servidor si hay una sesión activa
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        console.log("🔍 Verificando si hay sesión activa...");
-        const response = await fetch("http://localhost:3001/api/me", {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log(" Sesión encontrada para:", data.user);
-          setUser(data.user);
-        } else {
-          console.warn(
-            "❌ No hay sesión o el servidor rechazó. Código:",
-            response.status,
-          );
-        }
-      } catch (error) {
-        console.error(" Error de conexión al verificar sesión:", error);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
   // Función para cerrar sesión
   const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:3001/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      setUser(null); // Borramos el usuario de la pantalla
-      window.location.href = "/login"; // Redirigimos al login
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
+    await logout();
+    window.location.href = "/login"; // Redirigimos al login
   };
 
   return (
@@ -77,7 +44,11 @@ function Navbar() {
             {!isAuthPage && (
               <>
                 <li className="nav-item">
-                  <a className={`nav-link ${location.pathname === "/" ? "active" : ""}`} aria-current="page" href="/">
+                  <a
+                    className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+                    aria-current="page"
+                    href="/"
+                  >
                     Inicio
                   </a>
                 </li>
@@ -123,7 +94,10 @@ function Navbar() {
 
                 {/* Enlace al carrito de compras */}
                 <li className="nav-item">
-                  <a className={`nav-link ${location.pathname === "/carrito" ? "active" : ""}`} href="/carrito">
+                  <a
+                    className={`nav-link ${location.pathname === "/carrito" ? "active" : ""}`}
+                    href="/carrito"
+                  >
                     Carrito
                   </a>
                 </li>
@@ -147,7 +121,10 @@ function Navbar() {
                   // Opciones para cuando ESTÁ logueado
                   <>
                     <li>
-                      <a className={`dropdown-item ${isProfilePage ? "active" : ""}`} href="/perfil">
+                      <a
+                        className={`dropdown-item ${isProfilePage ? "active" : ""}`}
+                        href="/perfil"
+                      >
                         {isProfilePage ? " Configuración" : "Mis Detalles"}
                       </a>
                     </li>
@@ -168,12 +145,18 @@ function Navbar() {
                   // Opciones para cuando NO está logueado
                   <>
                     <li>
-                      <a className={`dropdown-item ${location.pathname === "/login" ? "active" : ""}`} href="/login">
+                      <a
+                        className={`dropdown-item ${location.pathname === "/login" ? "active" : ""}`}
+                        href="/login"
+                      >
                         Inicio de sesión
                       </a>
                     </li>
                     <li>
-                      <a className={`dropdown-item ${location.pathname === "/register" ? "active" : ""}`} href="/register">
+                      <a
+                        className={`dropdown-item ${location.pathname === "/register" ? "active" : ""}`}
+                        href="/register"
+                      >
                         Registro
                       </a>
                     </li>
@@ -183,13 +166,30 @@ function Navbar() {
             </li>
 
             {/* Panel de administración (SOLO VISIBLE PARA ADMINS) */}
-            {user && user.role === "admin" && (
+            {user && hasRole("admin") && (
               <li className="nav-item">
-                <a className={`nav-link ${isAdminPage ? "text-primary fw-bold active" : "text-primary fw-bold"}`} href="/admin">
+                <a
+                  className={`nav-link ${isAdminPage ? "text-primary fw-bold active" : "text-primary fw-bold"}`}
+                  href="/admin"
+                >
                   {isAdminPage ? "🔧 Panel Admin" : "Panel de administración"}
                 </a>
               </li>
             )}
+
+            {/* Enlace para agregar productos (VISIBLE PARA EDITORES Y ADMINS)
+            {user && hasAnyRole(["admin", "editor"]) && (
+              <li className="nav-item">
+                <a
+                  className={`nav-link ${location.pathname === "/form" ? "text-success fw-bold active" : "text-success fw-bold"}`}
+                  href="/form"
+                >
+                  {location.pathname === "/form"
+                    ? "📝 Agregar Producto"
+                    : "Agregar Producto"}
+                </a>
+              </li>
+            )} */}
           </ul>
         </div>
       </div>

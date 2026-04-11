@@ -4,7 +4,12 @@
  * Utiliza Vite como herramienta de construcción.
  */
 
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
@@ -14,6 +19,8 @@ import Cards from "./components/cards"; // Componente que muestra las tarjetas d
 import Hero from "./components/hero.jsx"; // Sección de bienvenida
 import Form from "./pages/Form.jsx"; // Página para agregar nuevos productos
 import LoginPage from "./pages/LoginPage";
+import AdminPanel from "./pages/AdminPanel.jsx";
+import Carousel from "./components/carousel.jsx";
 import "./scss/card.css"; // Estilos de tarjetas
 import "./scss/navbar.css"; // Estilos de navegación
 import "./scss/hero.css"; // Estilos de la sección hero
@@ -23,10 +30,8 @@ import UserManagementPanel from "./pages/UserManagementPanel.jsx"; // Panel de a
 import CartPage from "./pages/CartPage.jsx"; // Página del carrito de compras
 import UserSettingsPage from "./pages/UserSettingsPage.jsx"; // Página de configuración de usuario
 import { CartProvider } from "./context/CartContext"; // Proveedor de contexto para el carrito de compras
-import Carousel from "./components/carousel"; // Importar el nuevo componente de carrusel
-import AdminPanel from "./pages/AdminPanel.jsx"; // Panel de administración general
-import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx"; // Página de recuperación de contraseña
-import ResetPasswordPage from "./pages/ResetPasswordPage.jsx"; // Página de reset de contraseña
+import { AuthProvider } from "./context/AuthContext"; // Proveedor de contexto para autenticación
+import ProtectedRoute from "./components/ProtectedRoute"; // Componente para proteger rutas
 
 /**
  * Componente principal de la aplicación
@@ -60,21 +65,50 @@ function App() {
   }, []);
 
   return (
-    <CartProvider>
-      <Router>
-        <Navbar /> {/* Navbar ahora en todas las páginas */}
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<AppContent />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/perfil" element={<UserSettingsPage />} />
-          <Route path="/carrito" element={<CartPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-        </Routes>
-      </Router>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <Navbar /> {/* Navbar ahora en todas las páginas */}
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<AppContent />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute requiredPermission="manage_own_profile">
+                  <UserSettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/carrito"
+              element={
+                <ProtectedRoute requiredPermission="buy_products">
+                  <CartPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/form"
+              element={
+                <ProtectedRoute requiredPermission="create_products">
+                  <Form />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

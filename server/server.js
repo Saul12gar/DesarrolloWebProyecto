@@ -6,6 +6,9 @@ const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const mysql = require("mysql2");
 const nodemailer = require("nodemailer");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 // Cargar variables de entorno
 dotenv.config();
@@ -24,6 +27,25 @@ app.use(
     credentials: true,
   }),
 );
+
+// Crear directorio de imágenes si no existe
+const imagesDir = path.join(__dirname, "public/images");
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+// Configurar multer para subir imágenes
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, imagesDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -93,7 +115,10 @@ function initDatabase() {
             `ALTER TABLE users ADD COLUMN ${column.name} ${column.definition}`,
             (alterErr) => {
               if (alterErr) {
-                console.error(`Error agregando columna ${column.name}:`, alterErr);
+                console.error(
+                  `Error agregando columna ${column.name}:`,
+                  alterErr,
+                );
               }
             },
           );
@@ -152,7 +177,7 @@ function fetchUserSessions(userId, callback) {
 }
 
 function createPasswordResetToken(userId, callback) {
-  const token = require('crypto').randomBytes(32).toString('hex');
+  const token = require("crypto").randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL);
 
   db.query(
@@ -197,7 +222,8 @@ function authenticateToken(req, res, next) {
       .json({ message: "No autorizado. Falta la cookie de sesión." });
 
   jwt.verify(token, ACCESS_TOKEN_SECRET, (err, payload) => {
-    if (err) return res.status(403).json({ message: "Sesión inválida o expirada." });
+    if (err)
+      return res.status(403).json({ message: "Sesión inválida o expirada." });
     if (!payload.sessionId)
       return res.status(403).json({ message: "Sesión inválida." });
 
@@ -207,7 +233,9 @@ function authenticateToken(req, res, next) {
 
       req.user = payload;
       req.sessionId = payload.sessionId;
-      db.query("UPDATE user_sessions SET last_activity = NOW() WHERE id = ?", [payload.sessionId]);
+      db.query("UPDATE user_sessions SET last_activity = NOW() WHERE id = ?", [
+        payload.sessionId,
+      ]);
       next();
     });
   });
@@ -227,6 +255,22 @@ function authenticateAdmin(req, res, next) {
   });
 }
 
+function authenticateEditorOrAdmin(req, res, next) {
+  const token = req.cookies.accessToken;
+  if (!token)
+    return res.status(401).json({ message: "No autorizado. Falta el token." });
+
+  jwt.verify(token, ACCESS_TOKEN_SECRET, (err, payload) => {
+    if (err || (payload.role !== "admin" && payload.role !== "editor"))
+      return res.status(403).json({
+        message: "No autorizado. Se requiere rol de editor o administrador.",
+      });
+
+    req.user = payload;
+    next();
+  });
+}
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -238,13 +282,18 @@ const transporter = nodemailer.createTransport({
 app.post("/api/register", (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email || !password)
-    return res.status(400).json({ message: "Todos los campos son obligatorios." });
+    return res
+      .status(400)
+      .json({ message: "Todos los campos son obligatorios." });
 
-  const query = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+  const query =
+    "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')";
   db.query(query, [username, email, password], (err) => {
     if (err) {
       if (err.code === "ER_DUP_ENTRY")
-        return res.status(400).json({ message: "El usuario o correo ya existe." });
+        return res
+          .status(400)
+          .json({ message: "El usuario o correo ya existe." });
       return res.status(500).json({ message: "Error al registrar usuario." });
     }
     res.status(201).json({ message: "Usuario registrado exitosamente." });
@@ -252,11 +301,11 @@ app.post("/api/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   const query =
-    "SELECT id, username, email, role, mfa_enabled FROM users WHERE username = ? AND password = ?";
+    "SELECT id, username, email, role, mfa_enabled FROM users WHERE email = ? AND password = ?";
 
-  db.query(query, [username, password], (err, results) => {
+  db.query(query, [email, password], (err, results) => {
     if (err) return res.status(500).json({ message: "Error en el servidor." });
     if (results.length === 0)
       return res.status(401).json({ message: "Credenciales inválidas." });
@@ -272,7 +321,9 @@ app.post("/login", (req, res) => {
         [otp, expires, user.id],
         async (updateErr) => {
           if (updateErr)
-            return res.status(500).json({ message: "Error al generar el código MFA." });
+            return res
+              .status(500)
+              .json({ message: "Error al generar el código MFA." });
 
           try {
             await transporter.sendMail({
@@ -285,79 +336,103 @@ app.post("/login", (req, res) => {
             res.json({
               message: "Código enviado al correo.",
               requireMfa: true,
-              username: user.username,
+              email: user.email,
             });
           } catch (mailErr) {
             console.error("Error enviando correo:", mailErr);
-            res.status(500).json({ message: "Error al enviar el correo de verificación." });
+            res
+              .status(500)
+              .json({ message: "Error al enviar el correo de verificación." });
           }
         },
       );
     } else {
-      createSession(user.id, req.headers["user-agent"] || "desconocido", (sessionErr, sessionId) => {
-        if (sessionErr)
-          return res.status(500).json({ message: "Error al iniciar sesión." });
+      createSession(
+        user.id,
+        req.headers["user-agent"] || "desconocido",
+        (sessionErr, sessionId) => {
+          if (sessionErr)
+            return res
+              .status(500)
+              .json({ message: "Error al iniciar sesión." });
 
-        const accessToken = generateAccessToken({
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          sessionId,
-        });
+          const accessToken = generateAccessToken({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            sessionId,
+          });
 
-        res.cookie("accessToken", accessToken, {
-          httpOnly: true,
-          secure: false,
-          sameSite: "lax",
-          maxAge: 24 * 60 * 60 * 1000,
-        });
+          res.cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: 24 * 60 * 60 * 1000,
+          });
 
-        res.json({ message: "Login exitoso", user });
-      });
+          res.json({ message: "Login exitoso", user });
+        },
+      );
     }
   });
 });
 
 app.post("/api/verify-mfa", (req, res) => {
-  const { username, otp } = req.body;
-  if (!username || !otp)
-    return res.status(400).json({ message: "Nombre de usuario y código son obligatorios." });
+  const { email, otp } = req.body;
+  if (!email || !otp)
+    return res
+      .status(400)
+      .json({ message: "Correo electrónico y código son obligatorios." });
 
-  db.query("SELECT id, username, email, role, mfa_code, mfa_expires FROM users WHERE username = ?", [username], (err, results) => {
-    if (err || results.length === 0)
-      return res.status(400).json({ message: "Usuario no encontrado." });
+  db.query(
+    "SELECT id, username, email, role, mfa_code, mfa_expires FROM users WHERE email = ?",
+    [email],
+    (err, results) => {
+      if (err || results.length === 0)
+        return res.status(400).json({ message: "Usuario no encontrado." });
 
-    const user = results[0];
-    if (user.mfa_code !== otp)
-      return res.status(401).json({ message: "Código incorrecto." });
-    if (Date.now() > user.mfa_expires)
-      return res.status(401).json({ message: "El código ha expirado." });
+      const user = results[0];
+      if (user.mfa_code !== otp)
+        return res.status(401).json({ message: "Código incorrecto." });
+      if (Date.now() > user.mfa_expires)
+        return res.status(401).json({ message: "El código ha expirado." });
 
-    db.query("UPDATE users SET mfa_code = NULL, mfa_expires = NULL WHERE id = ?", [user.id], (clearErr) => {
-      if (clearErr) console.error("Error borrando MFA:", clearErr);
+      db.query(
+        "UPDATE users SET mfa_code = NULL, mfa_expires = NULL WHERE id = ?",
+        [user.id],
+        (clearErr) => {
+          if (clearErr) console.error("Error borrando MFA:", clearErr);
 
-      createSession(user.id, req.headers["user-agent"] || "desconocido", (sessionErr, sessionId) => {
-        if (sessionErr)
-          return res.status(500).json({ message: "Error al iniciar sesión." });
+          createSession(
+            user.id,
+            req.headers["user-agent"] || "desconocido",
+            (sessionErr, sessionId) => {
+              if (sessionErr)
+                return res
+                  .status(500)
+                  .json({ message: "Error al iniciar sesión." });
 
-        const accessToken = generateAccessToken({
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          sessionId,
-        });
+              const accessToken = generateAccessToken({
+                id: user.id,
+                username: user.username,
+                role: user.role,
+                sessionId,
+              });
 
-        res.cookie("accessToken", accessToken, {
-          httpOnly: true,
-          secure: false,
-          sameSite: "lax",
-          maxAge: 24 * 60 * 60 * 1000,
-        });
+              res.cookie("accessToken", accessToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: "lax",
+                maxAge: 24 * 60 * 60 * 1000,
+              });
 
-        res.json({ message: "Login completado con éxito", user });
-      });
-    });
-  });
+              res.json({ message: "Login completado con éxito", user });
+            },
+          );
+        },
+      );
+    },
+  );
 });
 
 app.post("/api/logout", authenticateToken, (req, res) => {
@@ -371,27 +446,36 @@ app.post("/api/logout", authenticateToken, (req, res) => {
 // Endpoint para solicitar recuperación de contraseña
 app.post("/api/forgot-password", (req, res) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ message: "El email es obligatorio." });
+  if (!email)
+    return res.status(400).json({ message: "El email es obligatorio." });
 
-  db.query("SELECT id, username FROM users WHERE email = ?", [email], (err, results) => {
-    if (err) return res.status(500).json({ message: "Error en el servidor." });
-    if (results.length === 0)
-      return res.status(404).json({ message: "No se encontró una cuenta con ese email." });
+  db.query(
+    "SELECT id, username FROM users WHERE email = ?",
+    [email],
+    (err, results) => {
+      if (err)
+        return res.status(500).json({ message: "Error en el servidor." });
+      if (results.length === 0)
+        return res
+          .status(404)
+          .json({ message: "No se encontró una cuenta con ese email." });
 
-    const user = results[0];
+      const user = results[0];
 
-    createPasswordResetToken(user.id, async (tokenErr, token) => {
-      if (tokenErr)
-        return res.status(500).json({ message: "Error generando token de recuperación." });
+      createPasswordResetToken(user.id, async (tokenErr, token) => {
+        if (tokenErr)
+          return res
+            .status(500)
+            .json({ message: "Error generando token de recuperación." });
 
-      const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+        const resetLink = `http://localhost:5173/reset-password?token=${token}`;
 
-      try {
-        await transporter.sendMail({
-          from: `"Tienda Figuras" <${process.env.EMAIL_USER || "saul11chido@gmail.com"}>`,
-          to: email,
-          subject: "🔑 Recuperación de Contraseña - Tienda Figuras",
-          html: `
+        try {
+          await transporter.sendMail({
+            from: `"Tienda Figuras" <${process.env.EMAIL_USER || "saul11chido@gmail.com"}>`,
+            to: email,
+            subject: "🔑 Recuperación de Contraseña - Tienda Figuras",
+            html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #0d6efd;">Recuperación de Contraseña</h2>
               <p>Hola ${user.username},</p>
@@ -411,22 +495,29 @@ app.post("/api/forgot-password", (req, res) => {
               <p style="color: #666; font-size: 12px;">Tienda Figuras - Sistema de recuperación de contraseña</p>
             </div>
           `,
-        });
+          });
 
-        res.json({ message: "Se ha enviado un enlace de recuperación a tu email." });
-      } catch (mailErr) {
-        console.error("Error enviando email de recuperación:", mailErr);
-        res.status(500).json({ message: "Error enviando el email de recuperación." });
-      }
-    });
-  });
+          res.json({
+            message: "Se ha enviado un enlace de recuperación a tu email.",
+          });
+        } catch (mailErr) {
+          console.error("Error enviando email de recuperación:", mailErr);
+          res
+            .status(500)
+            .json({ message: "Error enviando el email de recuperación." });
+        }
+      });
+    },
+  );
 });
 
 // Endpoint para resetear contraseña con token
 app.post("/api/reset-password", (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword)
-    return res.status(400).json({ message: "Token y nueva contraseña son obligatorios." });
+    return res
+      .status(400)
+      .json({ message: "Token y nueva contraseña son obligatorios." });
 
   validatePasswordResetToken(token, (err, results) => {
     if (err) return res.status(500).json({ message: "Error validando token." });
@@ -436,17 +527,24 @@ app.post("/api/reset-password", (req, res) => {
     const userId = results[0].user_id;
 
     // Actualizar contraseña
-    db.query("UPDATE users SET password = ? WHERE id = ?", [newPassword, userId], (updateErr) => {
-      if (updateErr)
-        return res.status(500).json({ message: "Error actualizando contraseña." });
+    db.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [newPassword, userId],
+      (updateErr) => {
+        if (updateErr)
+          return res
+            .status(500)
+            .json({ message: "Error actualizando contraseña." });
 
-      // Invalidar token
-      invalidatePasswordResetToken(token, (invalidateErr) => {
-        if (invalidateErr) console.error("Error invalidando token:", invalidateErr);
+        // Invalidar token
+        invalidatePasswordResetToken(token, (invalidateErr) => {
+          if (invalidateErr)
+            console.error("Error invalidando token:", invalidateErr);
 
-        res.json({ message: "Contraseña actualizada correctamente." });
-      });
-    });
+          res.json({ message: "Contraseña actualizada correctamente." });
+        });
+      },
+    );
   });
 });
 
@@ -461,7 +559,9 @@ app.get("/api/me", authenticateToken, (req, res) => {
 app.get("/api/user-settings", authenticateToken, (req, res) => {
   fetchUserById(req.user.id, (err, results) => {
     if (err || results.length === 0)
-      return res.status(500).json({ message: "Error obteniendo configuración." });
+      return res
+        .status(500)
+        .json({ message: "Error obteniendo configuración." });
 
     fetchUserSessions(req.user.id, (sessionErr, sessions) => {
       if (sessionErr)
@@ -481,11 +581,16 @@ app.patch("/api/user-settings", authenticateToken, (req, res) => {
     "UPDATE users SET theme = ?, language = ? WHERE id = ?",
     [themeValue, languageValue, req.user.id],
     (err) => {
-      if (err) return res.status(500).json({ message: "Error guardando preferencias." });
+      if (err)
+        return res
+          .status(500)
+          .json({ message: "Error guardando preferencias." });
 
       fetchUserById(req.user.id, (fetchErr, results) => {
         if (fetchErr || results.length === 0)
-          return res.status(500).json({ message: "Error obteniendo usuario actualizado." });
+          return res
+            .status(500)
+            .json({ message: "Error obteniendo usuario actualizado." });
         res.json({ message: "Preferencias actualizadas.", user: results[0] });
       });
     },
@@ -495,24 +600,32 @@ app.patch("/api/user-settings", authenticateToken, (req, res) => {
 app.patch("/api/user-settings/password", authenticateToken, (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword)
-    return res.status(400).json({ message: "Los campos de contraseña son obligatorios." });
+    return res
+      .status(400)
+      .json({ message: "Los campos de contraseña son obligatorios." });
 
   db.query(
     "SELECT password FROM users WHERE id = ?",
     [req.user.id],
     (err, results) => {
       if (err || results.length === 0)
-        return res.status(500).json({ message: "Error verificando la contraseña." });
+        return res
+          .status(500)
+          .json({ message: "Error verificando la contraseña." });
 
       if (results[0].password !== currentPassword)
-        return res.status(401).json({ message: "Contraseña actual incorrecta." });
+        return res
+          .status(401)
+          .json({ message: "Contraseña actual incorrecta." });
 
       db.query(
         "UPDATE users SET password = ? WHERE id = ?",
         [newPassword, req.user.id],
         (updateErr) => {
           if (updateErr)
-            return res.status(500).json({ message: "Error actualizando la contraseña." });
+            return res
+              .status(500)
+              .json({ message: "Error actualizando la contraseña." });
           res.json({ message: "Contraseña actualizada correctamente." });
         },
       );
@@ -523,54 +636,166 @@ app.patch("/api/user-settings/password", authenticateToken, (req, res) => {
 app.patch("/api/user-settings/mfa", authenticateToken, (req, res) => {
   const { enabled } = req.body;
   if (typeof enabled !== "boolean")
-    return res.status(400).json({ message: "El valor enabled debe ser booleano." });
+    return res
+      .status(400)
+      .json({ message: "El valor enabled debe ser booleano." });
 
   db.query(
     "UPDATE users SET mfa_enabled = ? WHERE id = ?",
     [enabled ? 1 : 0, req.user.id],
     (err) => {
-      if (err) return res.status(500).json({ message: "Error actualizando MFA." });
+      if (err)
+        return res.status(500).json({ message: "Error actualizando MFA." });
 
       fetchUserById(req.user.id, (fetchErr, results) => {
         if (fetchErr || results.length === 0)
-          return res.status(500).json({ message: "Error obteniendo usuario actualizado." });
-        res.json({ message: "Configuración MFA actualizada.", user: results[0] });
+          return res
+            .status(500)
+            .json({ message: "Error obteniendo usuario actualizado." });
+        res.json({
+          message: "Configuración MFA actualizada.",
+          user: results[0],
+        });
       });
     },
   );
 });
 
-app.post("/api/user-sessions/:sessionId/revoke", authenticateToken, (req, res) => {
-  const sessionId = Number(req.params.sessionId);
-  if (!sessionId) return res.status(400).json({ message: "Sesión inválida." });
+app.post(
+  "/api/user-sessions/:sessionId/revoke",
+  authenticateToken,
+  (req, res) => {
+    const sessionId = Number(req.params.sessionId);
+    if (!sessionId)
+      return res.status(400).json({ message: "Sesión inválida." });
 
-  db.query(
-    "SELECT user_id FROM user_sessions WHERE id = ?",
-    [sessionId],
-    (err, results) => {
-      if (err || results.length === 0)
-        return res.status(404).json({ message: "Sesión no encontrada." });
-      if (results[0].user_id !== req.user.id)
-        return res.status(403).json({ message: "No puedes cerrar esa sesión." });
+    db.query(
+      "SELECT user_id FROM user_sessions WHERE id = ?",
+      [sessionId],
+      (err, results) => {
+        if (err || results.length === 0)
+          return res.status(404).json({ message: "Sesión no encontrada." });
+        if (results[0].user_id !== req.user.id)
+          return res
+            .status(403)
+            .json({ message: "No puedes cerrar esa sesión." });
 
-      deactivateSession(sessionId, (deactivateErr) => {
-        if (deactivateErr)
-          return res.status(500).json({ message: "Error cerrando la sesión." });
-        res.json({ message: "Sesión cerrada correctamente." });
-      });
-    },
-  );
-});
+        deactivateSession(sessionId, (deactivateErr) => {
+          if (deactivateErr)
+            return res
+              .status(500)
+              .json({ message: "Error cerrando la sesión." });
+          res.json({ message: "Sesión cerrada correctamente." });
+        });
+      },
+    );
+  },
+);
 
 app.get("/api/products", (req, res) => {
   const query = "SELECT * FROM figures";
   db.query(query, (err, results) => {
-    if (err) return res.status(500).json({ message: "Error al obtener productos" });
+    if (err)
+      return res.status(500).json({ message: "Error al obtener productos" });
     const updatedResults = results.map((product) => ({
       ...product,
       imagen: `http://localhost/api/${product.imagenes}`,
     }));
     res.json(updatedResults);
+  });
+});
+
+// Crear producto (requiere editor o admin)
+app.post(
+  "/api/products",
+  authenticateEditorOrAdmin,
+  upload.single("imagen"),
+  (req, res) => {
+    const { nombre, categoria, precio, descripcion } = req.body;
+
+    if (!nombre || !categoria || !precio || !descripcion) {
+      return res
+        .status(400)
+        .json({ message: "Todos los campos son obligatorios" });
+    }
+
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: "Es necesario enviar una imagen" });
+    }
+
+    const imagenFilename = req.file.filename;
+    const query =
+      "INSERT INTO figures (nombre, categoria, precio, descripcion, imagenes) VALUES (?, ?, ?, ?, ?)";
+    db.query(
+      query,
+      [nombre, categoria, precio, descripcion, imagenFilename],
+      (err, result) => {
+        if (err) {
+          console.error("Error al crear producto:", err);
+          return res.status(500).json({
+            message: "Error al crear producto",
+            error: err.message,
+          });
+        }
+        res.status(201).json({
+          message: "Producto creado exitosamente",
+          id: result.insertId,
+        });
+      },
+    );
+  },
+);
+
+// Actualizar producto (requiere admin para editar cualquier producto, editor solo puede editar productos creados por él si implementamos owner tracking)
+app.put("/api/products/:id", authenticateEditorOrAdmin, (req, res) => {
+  const { nombre, categoria, precio, descripcion, imagenes, status } = req.body;
+  const productId = req.params.id;
+
+  if (!nombre || !categoria || !precio || !descripcion) {
+    return res
+      .status(400)
+      .json({ message: "Todos los campos son obligatorios" });
+  }
+
+  // Si es editor, verificar que tenga permisos para editar (por ahora permitimos a todos los editores/admin)
+  const query =
+    "UPDATE figures SET nombre = ?, categoria = ?, precio = ?, descripcion = ?, imagenes = ?, status = ? WHERE id = ?";
+  db.query(
+    query,
+    [
+      nombre,
+      categoria,
+      precio,
+      descripcion,
+      imagenes || "",
+      status || "available",
+      productId,
+    ],
+    (err, result) => {
+      if (err)
+        return res
+          .status(500)
+          .json({ message: "Error al actualizar producto" });
+      if (result.affectedRows === 0)
+        return res.status(404).json({ message: "Producto no encontrado" });
+      res.json({ message: "Producto actualizado exitosamente" });
+    },
+  );
+});
+
+// Eliminar producto (solo admin)
+app.delete("/api/products/:id", authenticateAdmin, (req, res) => {
+  const productId = req.params.id;
+
+  const query = "DELETE FROM figures WHERE id = ?";
+  db.query(query, [productId], (err, result) => {
+    if (err)
+      return res.status(500).json({ message: "Error al eliminar producto" });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Producto no encontrado" });
+    res.json({ message: "Producto eliminado exitosamente" });
   });
 });
 
@@ -581,7 +806,8 @@ app.get("/api/cart", authenticateToken, (req, res) => {
     WHERE c.user_id = ?
   `;
   db.query(query, [req.user.id], (err, results) => {
-    if (err) return res.status(500).json({ message: "Error al obtener carrito" });
+    if (err)
+      return res.status(500).json({ message: "Error al obtener carrito" });
     const formattedResults = results.map((product) => ({
       ...product,
       imagen: `http://localhost/api/${product.imagen}`,
@@ -598,7 +824,8 @@ app.post("/api/cart", authenticateToken, (req, res) => {
     "SELECT * FROM cart WHERE user_id = ? AND figure_id = ?",
     [user_id, figure_id],
     (err, results) => {
-      if (err) return res.status(500).json({ message: "Error actualizando carrito" });
+      if (err)
+        return res.status(500).json({ message: "Error actualizando carrito" });
       if (results.length > 0) {
         db.query(
           "UPDATE cart SET quantity = quantity + 1 WHERE user_id = ? AND figure_id = ?",
@@ -618,7 +845,8 @@ app.post("/api/cart", authenticateToken, (req, res) => {
 app.get("/api/users", authenticateAdmin, (req, res) => {
   const query = "SELECT id, username, email, role FROM users";
   db.query(query, (err, results) => {
-    if (err) return res.status(500).json({ message: "Error al obtener usuarios" });
+    if (err)
+      return res.status(500).json({ message: "Error al obtener usuarios" });
     res.json(results);
   });
 });
@@ -628,10 +856,107 @@ app.delete("/api/users/:id", authenticateToken, (req, res) => {
     return res.status(403).json({ message: "Acceso denegado" });
 
   db.query("DELETE FROM users WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: "Error al eliminar usuario" });
+    if (err)
+      return res.status(500).json({ message: "Error al eliminar usuario" });
     res.json({ message: "Usuario eliminado" });
   });
 });
+
+// ============= GESTIÓN DE SESIONES (ADMIN) =============
+
+// Obtener todas las sesiones activas (solo admin)
+app.get("/api/sessions", authenticateAdmin, (req, res) => {
+  // Obtener todas las sesiones activas con información del usuario
+  db.query(
+    `SELECT 
+      s.id, 
+      s.user_id, 
+      u.username, 
+      u.email, 
+      u.role,
+      s.user_agent, 
+      s.created_at, 
+      s.last_activity,
+      s.active
+     FROM user_sessions s
+     JOIN users u ON s.user_id = u.id
+     WHERE s.active = 1
+     ORDER BY s.last_activity DESC`,
+    (err, sessions) => {
+      if (err) {
+        return res.status(500).json({ message: "Error al obtener sesiones." });
+      }
+      res.json(sessions);
+    },
+  );
+});
+
+// Cerrar una sesión específica (solo admin)
+app.post("/api/sessions/:sessionId/close", authenticateAdmin, (req, res) => {
+  const userId = req.user.id;
+  const sessionId = req.params.sessionId;
+
+  // Verificar que sea admin
+  db.query("SELECT role FROM users WHERE id = ?", [userId], (err, results) => {
+    if (err || results.length === 0 || results[0].role !== "admin") {
+      return res.status(403).json({
+        message:
+          "Acceso denegado. Solo administradores pueden cerrar sesiones.",
+      });
+    }
+
+    // Cerrar la sesión
+    db.query(
+      "UPDATE user_sessions SET active = 0 WHERE id = ?",
+      [sessionId],
+      (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error al cerrar sesión." });
+        }
+        res.json({ message: "Sesión cerrada exitosamente." });
+      },
+    );
+  });
+});
+
+// Cerrar todas las sesiones de un usuario específico (solo admin)
+app.post(
+  "/api/users/:userId/close-all-sessions",
+  authenticateAdmin,
+  (req, res) => {
+    const adminId = req.user.id;
+    const targetUserId = req.params.userId;
+
+    // Verificar que sea admin
+    db.query(
+      "SELECT role FROM users WHERE id = ?",
+      [adminId],
+      (err, results) => {
+        if (err || results.length === 0 || results[0].role !== "admin") {
+          return res
+            .status(403)
+            .json({ message: "Acceso denegado. Solo administradores." });
+        }
+
+        // Cerrar todas las sesiones del usuario
+        db.query(
+          "UPDATE user_sessions SET active = 0 WHERE user_id = ?",
+          [targetUserId],
+          (err) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({ message: "Error al cerrar sesiones." });
+            }
+            res.json({
+              message: "Todas las sesiones del usuario han sido cerradas.",
+            });
+          },
+        );
+      },
+    );
+  },
+);
 
 app.use("/api/imagenes", express.static("public/images"));
 

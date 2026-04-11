@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react"; // Reim
 import "../scss/card.scss"; // Asegúrate de que apunte a tu archivo SCSS
 import Modal from "./Modal"; // Import the new Modal component
 import { useCart } from "../context/CartContext"; // Importar el contexto del carrito
+import { useAuth } from "../context/AuthContext"; // Importar el contexto de autenticación
 
 // --- Caché manual en memoria ---
 // Se declara fuera del componente para que sobreviva a los re-renders
@@ -40,6 +41,7 @@ const Cards = () => {
 
   const [successMessage, setSuccessMessage] = useState(""); // Definir el estado para successMessage
   const { addToCart } = useCart(); // Obtener la función addToCart del contexto
+  const { hasAnyRole } = useAuth(); // Obtener función para verificar roles
 
   const fetchDashboardData = async (search, category) => {
     setLoading(true);
@@ -306,6 +308,14 @@ const Cards = () => {
                       >
                         Ver Detalles
                       </button>
+                      {hasAnyRole(["admin", "editor"]) && (
+                        <button
+                          className="edit-btn"
+                          onClick={() => (window.location.href = `/admin`)} // Redirigir al panel de admin para editar
+                        >
+                          Editar
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
