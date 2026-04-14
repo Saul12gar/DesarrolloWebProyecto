@@ -44,7 +44,7 @@ function App() {
   useEffect(() => {
     const applyInitialTheme = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/me", {
+        const response = await fetch(`${API_URL}/api/me`, {
           credentials: "include",
         });
 

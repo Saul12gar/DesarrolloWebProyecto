@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   }),
 );
@@ -48,10 +48,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "storefigures",
+  host: process.env.DB_HOST || "localhost",
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "storefigures",
+  // Esta línea es clave para Aiven:
+  // Si detecta un Host remoto, activa SSL. Si estás en localhost, no lo usa.
+  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined,
 });
 
 function initDatabase() {
@@ -468,8 +472,8 @@ app.post("/api/forgot-password", (req, res) => {
             .status(500)
             .json({ message: "Error generando token de recuperación." });
 
-        const resetLink = `http://localhost:5173/reset-password?token=${token}`;
-
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const resetLink = `${frontendUrl}/reset-password?token=${token}`;
         try {
           await transporter.sendMail({
             from: `"Tienda Figuras" <${process.env.EMAIL_USER || "saul11chido@gmail.com"}>`,
@@ -694,12 +698,14 @@ app.post(
 
 app.get("/api/products", (req, res) => {
   const query = "SELECT * FROM figures";
+  const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
+
   db.query(query, (err, results) => {
     if (err)
       return res.status(500).json({ message: "Error al obtener productos" });
     const updatedResults = results.map((product) => ({
       ...product,
-      imagen: `http://localhost/api/${product.imagenes}`,
+      imagen: `${backendUrl}/api/imagenes/${product.imagenes}`,
     }));
     res.json(updatedResults);
   });

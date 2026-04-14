@@ -9,10 +9,11 @@ export default function Login() {
   const [captchaId, setCaptchaId] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
   const fetchCaptcha = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/captcha");
+      const response = await fetch(`${API_URL}/api/captcha`);
       if (!response.ok) throw new Error("Error al obtener el CAPTCHA");
       const data = await response.json();
       setCaptchaQuestion(data.question);
@@ -27,7 +28,7 @@ export default function Login() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:3001/api/register", {
+      const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

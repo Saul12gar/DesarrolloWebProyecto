@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../scss/auth.scss";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -15,7 +17,7 @@ const ForgotPasswordPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/forgot-password", {
+      const response = await fetch(`${API_URL}/api/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -41,7 +43,8 @@ const ForgotPasswordPage = () => {
       <div className="auth-card">
         <h2>Recuperar Contraseña</h2>
         <p className="auth-description">
-          Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.
+          Ingresa tu email y te enviaremos un enlace para restablecer tu
+          contraseña.
         </p>
 
         {message && <div className="success-message">{message}</div>}

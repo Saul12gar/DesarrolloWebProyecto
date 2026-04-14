@@ -20,6 +20,7 @@ const UserSettingsPage = () => {
     language: "es",
     mfa_enabled: false,
   });
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
   useEffect(() => {
     fetchSettings();
@@ -38,7 +39,7 @@ const UserSettingsPage = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:3001/api/user-settings", {
+      const response = await fetch(`${API_URL}/api/user-settings`, {
         credentials: "include",
       });
 
@@ -76,7 +77,7 @@ const UserSettingsPage = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3001/api/user-settings", {
+      const response = await fetch(`${API_URL}/api/user-settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -107,15 +108,12 @@ const UserSettingsPage = () => {
     setError("");
 
     try {
-      const response = await fetch(
-        "http://localhost:3001/api/user-settings/mfa",
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ enabled: !preferences.mfa_enabled }),
-        },
-      );
+      const response = await fetch(`${API_URL}/api/user-settings/mfa`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ enabled: !preferences.mfa_enabled }),
+      });
 
       const data = await response.json();
       if (!response.ok) {
@@ -162,18 +160,15 @@ const UserSettingsPage = () => {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:3001/api/user-settings/password",
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            currentPassword: passwordForm.currentPassword,
-            newPassword: passwordForm.newPassword,
-          }),
-        },
-      );
+      const response = await fetch(`${API_URL}/api/user-settings/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
 
       const data = await response.json();
       if (!response.ok) {
@@ -200,7 +195,7 @@ const UserSettingsPage = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/user-sessions/${sessionId}/revoke`,
+        `${API_URL}/api/user-sessions/${sessionId}/revoke`,
         {
           method: "POST",
           credentials: "include",

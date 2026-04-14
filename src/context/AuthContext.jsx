@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 // Definir roles y permisos
 export const ROLES = {
   ADMIN: "admin",
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/me", {
+        const response = await fetch(`${API_URL}/api/me`, {
           credentials: "include",
         });
 
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
-      const response = await fetch("http://localhost:3001/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }) => {
   // Verify MFA
   const verifyMfa = async (email, otp) => {
     try {
-      const response = await fetch("http://localhost:3001/api/verify-mfa", {
+      const response = await fetch(`${API_URL}/api/verify-mfa`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }) => {
   // Logout
   const logout = async () => {
     try {
-      await fetch("http://localhost:3001/logout", {
+      await fetch(`${API_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });

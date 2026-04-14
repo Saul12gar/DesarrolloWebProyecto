@@ -7,11 +7,13 @@ export const useCart = () => useContext(CartContext);
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
   // Cargar el carrito desde la base de datos al iniciar
   const fetchCart = async () => {
     try {
       // Importante: credentials: 'include' envía la cookie de sesión automáticamente
-      const response = await fetch("http://localhost:3001/api/cart", {
+      const response = await fetch(`${API_URL}/api/cart`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -32,7 +34,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product) => {
     try {
-      await fetch("http://localhost:3001/api/cart", {
+      await fetch(`${API_URL}/api/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ figure_id: product.id }),
