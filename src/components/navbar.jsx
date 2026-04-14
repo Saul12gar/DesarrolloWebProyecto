@@ -23,7 +23,7 @@ function Navbar() {
       <div className="container-fluid">
         {/* Logo/Marca de la tienda */}
         <a className="navbar-brand" href="/">
-          Astro's
+          Astro's Store
         </a>
         {/* Botón toggler para menú móvil */}
         <button
