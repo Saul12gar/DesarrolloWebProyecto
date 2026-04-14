@@ -4,6 +4,8 @@ import Modal from "./Modal"; // Import the new Modal component
 import { useCart } from "../context/CartContext"; // Importar el contexto del carrito
 import { useAuth } from "../context/AuthContext"; // Importar el contexto de autenticación
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 // --- Caché manual en memoria ---
 // Se declara fuera del componente para que sobreviva a los re-renders
 const apiCache = new Map();
