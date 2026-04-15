@@ -47,15 +47,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-const db = mysql.createConnection({
+const db = mysql.createConnection(process.env.DATABASE_URL || {
   host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "storefigures",
-  // Esta línea es clave para Aiven:
-  // Si detecta un Host remoto, activa SSL. Si estás en localhost, no lo usa.
-  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined,
+  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined
 });
 
 function initDatabase() {
