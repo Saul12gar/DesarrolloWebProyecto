@@ -76,9 +76,7 @@ const Cards = () => {
         fetch(`${API_URL}/api/me`, {
           signal: controller.signal,
         }),
-        fetch(`${API_URL}/api/some-config-endpoint`, {
-          signal: controller.signal,
-        }),
+       
       ]);
 
       let fetchedProducts = [];
