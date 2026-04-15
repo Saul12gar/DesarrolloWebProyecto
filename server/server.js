@@ -402,8 +402,8 @@ app.post("/login", (req, res) => {
 
           res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: "none",
+            secure: process.env.NODE_ENV === "production", // Solo seguro en producción
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Ajuste para local y producción
             maxAge: 24 * 60 * 60 * 1000,
           });
 
@@ -458,8 +458,9 @@ app.post("/api/verify-mfa", (req, res) => {
 
               res.cookie("accessToken", accessToken, {
                 httpOnly: true,
-                secure: false,
-                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production", // Solo seguro en producción
+                sameSite:
+                  process.env.NODE_ENV === "production" ? "none" : "lax", // Ajuste para local y producción
                 maxAge: 24 * 60 * 60 * 1000,
               });
 
