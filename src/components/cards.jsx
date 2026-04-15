@@ -73,10 +73,10 @@ const Cards = () => {
       // Múltiples peticiones simultáneas usando Promise.allSettled
       // Simulamos una segunda petición (ej. metadatos o banners) para cumplir el requisito
       const [productsRes, secondaryDataRes] = await Promise.allSettled([
-        fetch(`${API_URL}/api/me`, {
+        fetch(`${API_URL}/api/figures`, {
           signal: controller.signal,
+          credentials: "include", // Asegurar envío de cookies
         }),
-       
       ]);
 
       let fetchedProducts = [];
