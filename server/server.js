@@ -47,14 +47,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-const db = mysql.createConnection(process.env.DATABASE_URL || {
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "storefigures",
-  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined
-});
+const db = mysql.createConnection(
+  process.env.DATABASE_URL || {
+    host: process.env.DB_HOST || "localhost",
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "storefigures",
+    ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : undefined,
+  },
+);
 
 function initDatabase() {
   db.query(
@@ -216,28 +218,58 @@ function fetchUserById(userId, callback) {
   );
 }
 
+// Middleware para verificar el token de autenticación
 function authenticateToken(req, res, next) {
   const token = req.cookies.accessToken;
-  if (!token)
+  if (!token) {
+    console.error("Falta la cookie de sesión accessToken.");
     return res
       .status(401)
       .json({ message: "No autorizado. Falta la cookie de sesión." });
+  }
 
   jwt.verify(token, ACCESS_TOKEN_SECRET, (err, payload) => {
-    if (err)
+    if (err) {
+      console.error("Error verificando el token:", err);
       return res.status(403).json({ message: "Sesión inválida o expirada." });
-    if (!payload.sessionId)
+    }
+
+    if (!payload.sessionId) {
+      console.error("El token no contiene un sessionId válido.");
       return res.status(403).json({ message: "Sesión inválida." });
+    }
 
     queryActiveSession(payload.sessionId, (sessionErr, sessionResults) => {
-      if (sessionErr || sessionResults.length === 0)
+      if (sessionErr) {
+        console.error("Error consultando la sesión activa:", sessionErr);
+        return res.status(500).json({ message: "Error interno del servidor." });
+      }
+
+      if (sessionResults.length === 0) {
+        console.warn(
+          "Sesión cerrada o no encontrada para sessionId:",
+          payload.sessionId,
+        );
         return res.status(403).json({ message: "Sesión cerrada remotamente." });
+      }
 
       req.user = payload;
       req.sessionId = payload.sessionId;
-      db.query("UPDATE user_sessions SET last_activity = NOW() WHERE id = ?", [
-        payload.sessionId,
-      ]);
+
+      // Actualizar la última actividad de la sesión
+      db.query(
+        "UPDATE user_sessions SET last_activity = NOW() WHERE id = ?",
+        [payload.sessionId],
+        (updateErr) => {
+          if (updateErr) {
+            console.error(
+              "Error actualizando la última actividad de la sesión:",
+              updateErr,
+            );
+          }
+        },
+      );
+
       next();
     });
   });
