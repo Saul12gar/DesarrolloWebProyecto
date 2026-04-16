@@ -72,7 +72,7 @@ const Cards = () => {
    try {
      // 1. Corregimos a /api/products y dejamos solo una promesa
      const [productsRes] = await Promise.allSettled([
-       fetch(`${API_URL}/api/products`, {
+       fetch(`${API_URL}/api/figures`, {
          signal: controller.signal,
          credentials: "include",
        }),
