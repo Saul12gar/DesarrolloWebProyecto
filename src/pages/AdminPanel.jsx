@@ -3,6 +3,9 @@ import axios from "axios";
 import SessionsManager from "../components/SessionsManager";
 import "../scss/adminPanel.scss";
 
+// Declaramos la URL base aquí arriba para que ambos componentes la puedan usar
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function AddProductForm({ onSuccess }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -23,8 +26,8 @@ function AddProductForm({ onSuccess }) {
     data.append("imagen", imageFile);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-      await axios.post(`${API_URL}/api/products`, data, {
+      // Corregimos la ruta a /api/figures y usamos API_URL
+      await axios.post(`${API_URL}/api/figures`, data, {
         withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -98,7 +101,8 @@ const AdminPanel = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/users", {
+      // Usamos API_URL
+      const response = await axios.get(`${API_URL}/api/users`, {
         withCredentials: true,
       });
       setUsers(response.data);
@@ -109,7 +113,8 @@ const AdminPanel = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/products", {
+      // Usamos API_URL y cambiamos a /api/figures
+      const response = await axios.get(`${API_URL}/api/figures`, {
         withCredentials: true,
       });
       setProducts(response.data);
@@ -138,7 +143,8 @@ const AdminPanel = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:3001/api/products/${productId}`, {
+      // Usamos API_URL y cambiamos a /api/figures
+      await axios.delete(`${API_URL}/api/figures/${productId}`, {
         withCredentials: true,
       });
       setProducts(products.filter((p) => p.id !== productId));
@@ -158,8 +164,9 @@ const AdminPanel = () => {
     if (!editingProduct) return;
 
     try {
+      // Usamos API_URL y cambiamos a /api/figures
       await axios.put(
-        `http://localhost:3001/api/products/${editingProduct.id}`,
+        `${API_URL}/api/figures/${editingProduct.id}`,
         {
           nombre: productForm.name,
           categoria: editingProduct.categoria || "General",
