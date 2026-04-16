@@ -69,66 +69,55 @@ const Cards = () => {
       return;
     }
 
-    try {
-      // Múltiples peticiones simultáneas usando Promise.allSettled
-      // Simulamos una segunda petición (ej. metadatos o banners) para cumplir el requisito
-      const [productsRes, secondaryDataRes] = await Promise.allSettled([
-        fetch(`${API_URL}/api/figures`, {
-          signal: controller.signal,
-          credentials: "include", // Asegurar envío de cookies
-        }),
-      ]);
+   try {
+     // 1. Corregimos a /api/products y dejamos solo una promesa
+     const [productsRes] = await Promise.allSettled([
+       fetch(`${API_URL}/api/products`, {
+         signal: controller.signal,
+         credentials: "include",
+       }),
+     ]);
 
-      let fetchedProducts = [];
-      let currentPartialError = null;
+     let fetchedProducts = [];
+     let currentPartialError = null;
 
-      // Analizamos: ¿Qué ocurre si falla la petición principal?
-      if (productsRes.status === "fulfilled" && productsRes.value.ok) {
-        fetchedProducts = await productsRes.value.json();
-      } else {
-        throw new Error(
-          "Fallo crítico: No se pudieron cargar las figuras desde el servidor.",
-        );
-      }
+     // 2. Evaluamos solo el resultado de los productos
+     if (productsRes.status === "fulfilled" && productsRes.value.ok) {
+       fetchedProducts = await productsRes.value.json();
+     } else {
+       throw new Error(
+         "Fallo crítico: No se pudieron cargar las figuras desde el servidor.",
+       );
+     }
 
-      // Manejo de errores parciales si falla la petición secundaria
-      if (
-        secondaryDataRes.status === "rejected" ||
-        !secondaryDataRes.value.ok
-      ) {
-        currentPartialError =
-          "Aviso: No se pudieron cargar algunos metadatos secundarios (Error Parcial).";
-      }
+     // Filtrado
+     let filtered = fetchedProducts;
+     if (search) {
+       filtered = filtered.filter((f) =>
+         f.nombre.toLowerCase().includes(search.toLowerCase()),
+       );
+     }
+     if (category !== "All") {
+       filtered = filtered.filter((f) => f.categoria === category);
+     }
 
-      // Filtrado (si la API no soporta querystrings, filtramos aquí como ejemplo en tiempo real)
-      let filtered = fetchedProducts;
-      if (search) {
-        filtered = filtered.filter((f) =>
-          f.nombre.toLowerCase().includes(search.toLowerCase()),
-        );
-      }
-      if (category !== "All") {
-        filtered = filtered.filter((f) => f.categoria === category);
-      }
+     const dataToCache = {
+       products: filtered,
+       partialError: currentPartialError,
+     };
+     apiCache.set(cacheKey, dataToCache);
 
-      // Guardamos el resultado exitoso en caché
-      const dataToCache = {
-        products: filtered,
-        partialError: currentPartialError,
-      };
-      apiCache.set(cacheKey, dataToCache);
-
-      setFigures(filtered);
-      setPartialError(currentPartialError);
-    } catch (err) {
-      if (err.name === "AbortError") {
-        console.log("Petición cancelada debido a una actualización rápida.");
-      } else {
-        setError(err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
+     setFigures(filtered);
+     setPartialError(currentPartialError);
+   } catch (err) {
+     if (err.name === "AbortError") {
+       console.log("Petición cancelada debido a una actualización rápida.");
+     } else {
+       setError(err.message);
+     }
+   } finally {
+     setLoading(false);
+   }
   };
 
   // Aplicar Debounce a la función que hace fetch
