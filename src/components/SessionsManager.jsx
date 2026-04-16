@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../scss/adminPanel.scss";
 
+// 1. Agregamos la URL dinámica
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function SessionsManager() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,14 +12,14 @@ function SessionsManager() {
 
   useEffect(() => {
     fetchSessions();
-    // Actualizar sesiones cada 30 segundos
     const interval = setInterval(fetchSessions, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchSessions = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/sessions", {
+      // 2. Usamos API_URL aquí
+      const response = await axios.get(`${API_URL}/api/sessions`, {
         withCredentials: true,
       });
       setSessions(response.data);
@@ -34,13 +37,13 @@ function SessionsManager() {
       !window.confirm(
         "¿Está seguro de que desea cerrar esta sesión? El usuario será desconectado.",
       )
-    ) {
+    )
       return;
-    }
 
     try {
+      // 3. Usamos API_URL aquí
       await axios.post(
-        `http://localhost:3001/api/sessions/${sessionId}/close`,
+        `${API_URL}/api/sessions/${sessionId}/close`,
         {},
         { withCredentials: true },
       );
@@ -56,13 +59,13 @@ function SessionsManager() {
       !window.confirm(
         "¿Está seguro de que desea cerrar TODAS las sesiones de este usuario?",
       )
-    ) {
+    )
       return;
-    }
 
     try {
+      // 4. Usamos API_URL aquí
       await axios.post(
-        `http://localhost:3001/api/users/${userId}/close-all-sessions`,
+        `${API_URL}/api/users/${userId}/close-all-sessions`,
         {},
         { withCredentials: true },
       );
@@ -159,141 +162,6 @@ function SessionsManager() {
           </div>
         </>
       )}
-
-      <style>{`
-        .sessions-manager {
-          margin-top: 2rem;
-          padding: 1.5rem;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          color: #fff;
-        }
-
-        .sessions-manager h2 {
-          margin-bottom: 1rem;
-          color: #fff;
-        }
-
-        .sessions-count {
-          font-size: 0.95rem;
-          color: #a0a0a0;
-          margin-bottom: 1rem;
-        }
-
-        .sessions-table-wrapper {
-          overflow-x: auto;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sessions-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.9rem;
-        }
-
-        .sessions-table thead {
-          background: rgba(255, 255, 255, 0.08);
-          border-bottom: 2px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .sessions-table th {
-          padding: 1rem;
-          text-align: left;
-          font-weight: 600;
-          color: #e0e0e0;
-        }
-
-        .sessions-table td {
-          padding: 0.75rem 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .sessions-table tbody tr:hover {
-          background: rgba(255, 255, 255, 0.03);
-        }
-
-        .user-name {
-          font-weight: 500;
-          color: #64b5f6;
-        }
-
-        .role-badge {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          border-radius: 20px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
-
-        .role-admin {
-          background: rgba(244, 67, 54, 0.2);
-          color: #ff6b6b;
-        }
-
-        .role-editor {
-          background: rgba(33, 150, 243, 0.2);
-          color: #64b5f6;
-        }
-
-        .role-user {
-          background: rgba(76, 175, 80, 0.2);
-          color: #81c784;
-        }
-
-        .actions {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-        }
-
-        .btn-close-session,
-        .btn-close-all {
-          padding: 0.4rem 0.8rem;
-          border: none;
-          border-radius: 6px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-close-session {
-          background: rgba(244, 67, 54, 0.3);
-          color: #ff6b6b;
-        }
-
-        .btn-close-session:hover {
-          background: rgba(244, 67, 54, 0.5);
-          transform: scale(1.05);
-        }
-
-        .btn-close-all {
-          background: rgba(233, 30, 99, 0.3);
-          color: #ff1744;
-        }
-
-        .btn-close-all:hover {
-          background: rgba(233, 30, 99, 0.5);
-          transform: scale(1.05);
-        }
-
-        .error-message {
-          padding: 1rem;
-          background: rgba(244, 67, 54, 0.2);
-          border-left: 4px solid #ff6b6b;
-          border-radius: 4px;
-          color: #ff6b6b;
-          margin-bottom: 1rem;
-        }
-
-        .loading {
-          padding: 2rem;
-          text-align: center;
-          color: #a0a0a0;
-        }
-      `}</style>
     </div>
   );
 }

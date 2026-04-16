@@ -1,51 +1,221 @@
-/* Estilos para el Panel de Administración */
-
+/* Estilos Globales del Panel de Administración */
 .admin-panel {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', Arial, sans-serif;
+  color: #e0e0e0;
 
-.admin-panel h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
+  h1, h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    font-weight: 700;
+  }
 
-.admin-panel table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
+  /* Tablas de Usuarios y Productos */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 
-.admin-panel th,
-.admin-panel td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-.admin-panel th {
-  background-color: #f4f4f4;
-  color: #333;
-}
+    th {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
 
-.admin-panel tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
+    tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
 
-.admin-panel tr:hover {
-  background-color: #f1f1f1;
-}
+  /* Botones Generales */
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-right: 8px;
 
-.admin-panel button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 4px;
-}
+    &.btn-edit {
+      background-color: rgba(33, 150, 243, 0.2);
+      color: #64b5f6;
+      border: 1px solid #64b5f6;
+      
+      &:hover {
+        background-color: #64b5f6;
+        color: #000;
+      }
+    }
 
-.admin-panel button:hover {
-  background-color: #45a049;
+    &.btn-delete {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b;
+
+      &:hover {
+        background-color: #ff6b6b;
+        color: #000;
+      }
+    }
+  }
+
+  /* Formulario de Añadir Producto */
+  .add-product-form {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 1rem;
+
+      &:focus {
+        outline: none;
+        border-color: #64b5f6;
+      }
+    }
+
+    button[type="submit"] {
+      background-color: #4caf50;
+      color: white;
+      padding: 14px;
+      font-size: 1.1rem;
+      margin-top: 10px;
+      
+      &:hover {
+        background-color: #45a049;
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  /* Modal de Edición */
+  .modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    form {
+      background: #1a1a2e;
+      padding: 2.5rem;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      h2 { margin-bottom: 0.5rem; }
+
+      label {
+        color: #a0a0a0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      input, textarea {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.3);
+        color: white;
+      }
+
+      button[type="submit"] {
+        background-color: #64b5f6;
+        color: #000;
+        margin-top: 10px;
+      }
+
+      button[type="button"] {
+        background-color: transparent;
+        color: #ff6b6b;
+        border: 1px solid #ff6b6b;
+        
+        &:hover {
+          background-color: #ff6b6b;
+          color: #000;
+        }
+      }
+    }
+  }
+
+  /* Estilos específicos para SessionsManager */
+  .sessions-manager {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sessions-count {
+    color: #a0a0a0;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .user-name {
+    color: #64b5f6;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    &.role-admin { background: rgba(244, 67, 54, 0.2); color: #ff6b6b; }
+    &.role-editor { background: rgba(33, 150, 243, 0.2); color: #64b5f6; }
+    &.role-user { background: rgba(76, 175, 80, 0.2); color: #81c784; }
+  }
+
+  .btn-close-session {
+    background-color: transparent;
+    color: #ffb74d;
+    border: 1px solid #ffb74d;
+    &:hover { background-color: #ffb74d; color: #000; }
+  }
+
+  .btn-close-all {
+    background-color: transparent;
+    color: #ff1744;
+    border: 1px solid #ff1744;
+    &:hover { background-color: #ff1744; color: #fff; }
+  }
 }
