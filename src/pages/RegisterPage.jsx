@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../scss/auth.scss"; // Importamos el mismo SCSS
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -20,8 +22,7 @@ const RegisterPage = () => {
     e.preventDefault();
     setMessage("Cargando...");
 
-    try {
-      const response = await fetch(`${API_URL}/api/register`, {
+   const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
