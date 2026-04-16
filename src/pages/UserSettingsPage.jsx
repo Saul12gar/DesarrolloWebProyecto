@@ -121,15 +121,15 @@ const UserSettingsPage = () => {
         return;
       }
 
-      setPreferences((prev) => ({
-        ...prev,
-        mfa_enabled: data.user.mfa_enabled,
-      }));
-      setMessage(
-        data.user.mfa_enabled
-          ? "MFA activado. El próximo acceso requerirá verificación adicional."
-          : "MFA desactivado.",
-      );
+     setPreferences((prev) => ({
+       ...prev,
+       mfa_enabled: Boolean(data.user.mfa_enabled), // <-- Agregamos Boolean()
+     }));
+     setMessage(
+       data.user.mfa_enabled
+         ? "MFA activado. El próximo acceso requerirá verificación adicional."
+         : "MFA desactivado.",
+     );
       setUser(data.user);
     } catch (err) {
       setError("Error actualizando MFA.");

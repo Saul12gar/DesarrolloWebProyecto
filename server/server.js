@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 app.use(cors({
     origin: ['http://localhost:5173', 'https://desarrollo-web-proyecto-xi.vercel.app'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST','PATCH',  'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
 }));
 
