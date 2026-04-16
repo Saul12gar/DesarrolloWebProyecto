@@ -21,15 +21,13 @@ const PASSWORD_RESET_TOKEN_TTL = 15 * 60 * 1000; // 15 minutos
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "https://desarrollo-web-proyecto-xi.vercel.app",
-    ],
-    credentials: true,
-  }),
-);
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://desarrollo-web-proyecto-xi.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true
+}));
+
 
 // Crear directorio de imágenes si no existe
 const imagesDir = path.join(__dirname, "public/images");
