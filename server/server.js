@@ -728,7 +728,7 @@ app.post(
   },
 );
 
-app.get("/api/products", (req, res) => {
+app.get("/api/figures", (req, res) => {
   const query = "SELECT * FROM figures";
   const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -745,7 +745,7 @@ app.get("/api/products", (req, res) => {
 
 // Crear producto (requiere editor o admin)
 app.post(
-  "/api/products",
+  "/api/figures",
   authenticateEditorOrAdmin,
   upload.single("imagen"),
   (req, res) => {
@@ -787,7 +787,7 @@ app.post(
 );
 
 // Actualizar producto (requiere admin para editar cualquier producto, editor solo puede editar productos creados por él si implementamos owner tracking)
-app.put("/api/products/:id", authenticateEditorOrAdmin, (req, res) => {
+app.put("/api/figures/:id", authenticateEditorOrAdmin, (req, res) => {
   const { nombre, categoria, precio, descripcion, imagenes, status } = req.body;
   const productId = req.params.id;
 
@@ -824,7 +824,7 @@ app.put("/api/products/:id", authenticateEditorOrAdmin, (req, res) => {
 });
 
 // Eliminar producto (solo admin)
-app.delete("/api/products/:id", authenticateAdmin, (req, res) => {
+app.delete("/api/figures/:id", authenticateAdmin, (req, res) => {
   const productId = req.params.id;
 
   const query = "DELETE FROM figures WHERE id = ?";
