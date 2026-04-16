@@ -52,46 +52,9 @@ function Navbar() {
                     Inicio
                   </a>
                 </li>
-                <li className="nav-item">
-                  <a
-                    className={`nav-link ${location.pathname === "/dashboard" ? "active" : ""}`}
-                    aria-current="page"
-                    href="/dashboard"
-                  >
-                    Dashboard
-                  </a>
-                </li>
+                
 
-                {/* Menú desplegable de categorías */}
-                <li className="nav-item dropdown">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    Categorias
-                  </a>
-                  <ul className="dropdown-menu">
-                    <li>
-                      <a className="dropdown-item" href="#">
-                        Figuras de accion
-                      </a>
-                    </li>
-                    <li>
-                      <a className="dropdown-item" href="#">
-                        Figuras de anime
-                      </a>
-                    </li>
-                    <li>
-                      <a className="dropdown-item" href="#">
-                        Otros
-                      </a>
-                    </li>
-                  </ul>
-                </li>
-
+               
                 {/* Enlace al carrito de compras */}
                 <li className="nav-item">
                   <a
