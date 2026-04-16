@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../scss/auth.scss"; // Importamos el mismo SCSS
+import "../scss/auth.scss";
 
+// 1. Agregamos la URL dinámica
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const RegisterPage = () => {
@@ -22,7 +23,9 @@ const RegisterPage = () => {
     e.preventDefault();
     setMessage("Cargando...");
 
-   const response = await fetch(`${API_URL}/api/register`, {
+    try {
+      // 2. Cambiamos localhost por la variable API_URL
+      const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -82,7 +85,6 @@ const RegisterPage = () => {
           <p className={isError ? "error-msg" : "success-msg"}>{message}</p>
         )}
 
-        {/* Sección para navegar al login */}
         <div className="toggle-auth">
           <p>¿Ya tienes una cuenta?</p>
           <button
