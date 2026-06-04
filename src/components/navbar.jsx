@@ -112,7 +112,7 @@ function Navbar() {
                         className={`dropdown-item ${location.pathname === "/login" ? "active" : ""}`}
                         href="/login"
                       >
-                        Inicio de sesión
+                        Arriba el necaxa
                       </a>
                     </li>
                     <li>
