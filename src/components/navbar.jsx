@@ -61,7 +61,7 @@ function Navbar() {
                     className={`nav-link ${location.pathname === "/carrito" ? "active" : ""}`}
                     href="/carrito"
                   >
-                    Carrito
+                    Siuuuuuuuuuuuuuuuuuuuuuuuuuuuuu Carrito 
                   </a>
                 </li>
               </>
